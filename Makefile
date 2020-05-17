@@ -1,3 +1,4 @@
+# Default make target
 .PHONY: all
 all: miniOS.img
 
@@ -5,15 +6,8 @@ X64 = 1
 
 BITS = 64
 XFLAGS = -DDEBUG -std=gnu11 -m64 -DX64 -mcmodel=kernel -mtls-direct-seg-refs -mno-red-zone
-LDFLAGS = -m elf_x86_64 -nodefaultlibs
+LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
-FSGSBASE=$(shell cat /proc/cpuinfo|grep fsgsbase)
-ifneq ($(strip $(FSGSBASE)),)
-   XFLAGS+= -D__FSGSBASE__
-endif
-OUT = out
-
-HOST_CC ?= gcc
 
 OPT ?= -O2
 ARCHOBJ_DIR =.archobj
@@ -23,21 +17,58 @@ OBJS := $(addprefix $(KOBJ_DIR)/,$(OBJS))
 AOBJs :=
 KOBJS :=
 DOBJS :=
-MODULEC_SOURCES = $(shell find module -name "*.c")
+MODULEC_SOURCES = $(shell find -name "*.c")
 MODULEC_OBJECTS = $(patsubst %.c, %.o, $(MODULEC_SOURCES))
 
-LIBS_SOURCES = $(shell find libs -name "*.c")
+LIBS_SOURCES = $(shell find -name "*.c")
 LIBS_OBJECTS = $(patsubst %.c, %.o, $(LIBS_SOURCES))
-LIBS_ASMSOURCES = $(shell find libs -name "*.S")
+LIBS_ASMSOURCES = $(shell find -name "*.S")
 LIBS_ASMOBJECTS = $(patsubst %.S, %.o, $(LIBS_ASMSOURCES))
 OBJS := $(addprefix $(ARCHOBJ_DIR)/,$(AOBJS)) \
           $(addprefix $(KOBJ_DIR)/,$(KOBJS)) $(addprefix $(DOBJ_DIR)/,$(DOBJS))
 OBJS += $(MODULEC_OBJECTS) $(LIBS_OBJECTS) $(LIBS_ASMOBJECTS)
-# Cross-compiling (e.g., on Mac OS X)
-CROSS_COMPILE ?=
 
-# If the makefile can't find QEMU, specify its path here
-QEMU ?= qemu-system-x86_64
+# Cross-compiling (e.g., on Mac OS X)
+ifndef CROSS_COMPILE
+CROSS_COMPILE := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
+	then echo 'i386-jos-elf-'; \
+	elif objdump -i 2>&1 | grep 'elf32-i386' >/dev/null 2>&1; \
+	then echo ''; \
+	else echo "***" 1>&2; \
+	echo "*** Error: Couldn't find an i386-*-elf version of GCC/binutils." 1>&2; \
+	echo "*** Is the directory with i386-jos-elf-gcc in your PATH?" 1>&2; \
+	echo "*** If your i386-*-elf toolchain is installed with a command" 1>&2; \
+	echo "*** prefix other than 'i386-jos-elf-', set your TOOLPREFIX" 1>&2; \
+	echo "*** environment variable to that prefix and run 'make' again." 1>&2; \
+	echo "*** To turn off this error, run 'gmake TOOLPREFIX= ...'." 1>&2; \
+	echo "***" 1>&2; exit 1; fi)
+endif
+
+# Try to infer the correct QEMU
+ifndef QEMU
+QEMU = $(shell if which qemu > /dev/null; \
+	then echo qemu; exit; \
+	elif which qemu-system-i386 > /dev/null; \
+	then echo qemu-system-i386; exit; \
+	elif which qemu-system-x86_64 > /dev/null; \
+	then echo qemu-system-x86_64; exit; \
+	else \
+	qemu=/Applications/Q.app/Contents/MacOS/i386-softmmu.app/Contents/MacOS/i386-softmmu; \
+	if test -x $$qemu; then echo $$qemu; exit; fi; fi; \
+	echo "***" 1>&2; \
+	echo "*** Error: Couldn't find a working QEMU executable." 1>&2; \
+	echo "*** Is the directory containing the qemu binary in your PATH" 1>&2; \
+	echo "*** or have you tried setting the QEMU variable in Makefile?" 1>&2; \
+	echo "***" 1>&2; exit 1)
+endif
+
+# Disable PIE when possible (for Ubuntu 16.10 toolchain)
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+CFLAGS += -fno-pie -no-pie
+endif
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
+CFLAGS += -fno-pie -nopie
+endif
 
 CC = $(CROSS_COMPILE)gcc
 AS = $(CROSS_COMPILE)gas
@@ -47,13 +78,9 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
         > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
 
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Wall -Werror
-CFLAGS += -g -Wall -MD -D__KERNEL__ -fno-omit-frame-pointer
-CFLAGS += -ffreestanding -fno-common -nostdlib -I arch/x86_64/include -Iinclude -I bsd/sys \
-  -gdwarf-2 $(XFLAGS) $(OPT) -fno-stack-protector
-CFLAGS += $(call cc-option, -fno-stack-protector, "")
-CFLAGS += $(call cc-option, -fno-stack-protector-all, "")
-ASFLAGS = -gdwarf-2 -Wa,-divide -D__ASSEMBLY__ -Iinclude -I arch/x86_64/include $(XFLAGS)
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
+CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 
 MODULEC_FLAGS=$(CFLAGS) -D_MODULE
 $(KOBJ_DIR)/%.o: kernel/%.c
@@ -65,7 +92,7 @@ $(KOBJ_DIR)/%.o: kernel/%.S
 	$(CC) $(ASFLAGS) -c -o $@ $<
 $(ARCHOBJ_DIR)/%.o: arch/x86_64/%.c
 	@mkdir -p $(ARCHOBJ_DIR)
-	(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(ARCHOBJ_DIR)/%.o: arch/x86_64/%.S
 	@mkdir -p $(ARCHOBJ_DIR)
@@ -84,32 +111,30 @@ $(DOBJ_DIR)/%.o: drivers/%.S
 	$(CC) $(MODULEC_FLAGS) -c $< -o $@
 .S.o:
 	$(CC) $(ASFLAGS)  -c -o $@ $<
-$(OUT)/bootblock: bootloader/bootasm.S bootloader/bootmain.c
-	@mkdir -p $(OUT)
-	$(CC) -fno-builtin -fno-pic -m32 -nostdinc -fno-stack-protector -Iinclude \
-  		-Os -o $(OUT)/bootmain.o -c bootloader/bootmain.c
-	$(CC) -fno-builtin -fno-pic -m32 -nostdinc -Iarch/x86_64/include -Iinclude \
-   	-o $(OUT)/bootasm.o -c bootloader/bootasm.S
-	$(LD) -m elf_i386 -nodefaultlibs --omagic -e start -Ttext 0x7C00 \
-		-o $(OUT)/bootblock.o $(OUT)/bootasm.o $(OUT)/bootmain.o
-	$(OBJDUMP) -S $(OUT)/bootblock.o > $(OUT)/bootblock.asm
-	$(OBJCOPY) -S -O binary -j .text $(OUT)/bootblock.o $(OUT)/bootblock
-		../tools/sign.pl $(OUT)/bootblock
-clean:
-	rm -rf $(OUT) $(FS_DIR) $(UOBJ_DIR) $(KOBJ_DIR) $(ARCHOBJ_DIR) $(DOBJ_DIR)
-	rm -f kernel/vectors.S miniOS.img miniOSmemfs.img  .gdbinit
-	rm -rf $(MODULEC_OBJECTS)
-	rm -rf $(LIBS_OBJECTS)
-ifndef CPUS
-CPUS := $(shell grep -c ^processor /proc/cpuinfo 2>/devs/null || sysctl -n hw.ncpu)
-endif
-QEMUOPTS =-enable-kvm -cpu host,+x2apic -vga vmware -display vnc=192.168.10.2:10 \
-	-hdb miniOS.img -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
-miniOS.img: $(OUT)/bootblock
+miniOS.img: bootblock
 	dd if=/dev/zero of=miniOS.img count=10000
-	dd if=$(OUT)/bootblock of=miniOS.img conv=notrunc
+	dd if=bootblock of=miniOS.img conv=notrunc
+
+bootblock: bootasm.S bootmain.c
+	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -c bootmain.c
+	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c bootasm.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
+	$(OBJDUMP) -S bootblock.o > bootblock.asm
+	$(OBJCOPY) -S -O binary -j .text bootblock.o bootblock 
+	./sign.pl bootblock
+
+clean: 
+	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+	*.o *.d *.asm *.sym vectors.S bootblock entryother \
+	initcode initcode.out kernel miniOS.img fs.img kernelmemfs \
+	miniOSmemfs.img mkfs .gdbinit
+
+
+ifndef CPUS
+CPUS := $(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+endif
+QEMUOPTS = -drive file=miniOS.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 
 qemu: miniOS.img
-	@echo Ctrl+a h for help
-	$(QEMU) -serial mon:stdio  -nographic $(QEMUOPTS)
+	$(QEMU) -serial mon:stdio $(QEMUOPTS)
