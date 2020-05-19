@@ -2,32 +2,6 @@
 .PHONY: all
 all: miniOS.img
 
-X64 = 1
-
-BITS = 64
-XFLAGS = -DDEBUG -std=gnu11 -m64 -DX64 -mcmodel=kernel -mtls-direct-seg-refs -mno-red-zone
-LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
-
-
-OPT ?= -O2
-ARCHOBJ_DIR =.archobj
-DOBJ_DIR =.dobj
-KOBJ_DIR = .kobj
-OBJS := $(addprefix $(KOBJ_DIR)/,$(OBJS))
-AOBJs :=
-KOBJS :=
-DOBJS :=
-MODULEC_SOURCES = $(shell find -name "*.c")
-MODULEC_OBJECTS = $(patsubst %.c, %.o, $(MODULEC_SOURCES))
-
-LIBS_SOURCES = $(shell find -name "*.c")
-LIBS_OBJECTS = $(patsubst %.c, %.o, $(LIBS_SOURCES))
-LIBS_ASMSOURCES = $(shell find -name "*.S")
-LIBS_ASMOBJECTS = $(patsubst %.S, %.o, $(LIBS_ASMSOURCES))
-OBJS := $(addprefix $(ARCHOBJ_DIR)/,$(AOBJS)) \
-          $(addprefix $(KOBJ_DIR)/,$(KOBJS)) $(addprefix $(DOBJ_DIR)/,$(DOBJS))
-OBJS += $(MODULEC_OBJECTS) $(LIBS_OBJECTS) $(LIBS_ASMOBJECTS)
-
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
 CROSS_COMPILE := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
@@ -81,54 +55,34 @@ cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
 CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
+LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
-MODULEC_FLAGS=$(CFLAGS) -D_MODULE
-$(KOBJ_DIR)/%.o: kernel/%.c
-	@mkdir -p $(KOBJ_DIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(KOBJ_DIR)/%.o: kernel/%.S
-	@mkdir -p $(KOBJ_DIR)
-	$(CC) $(ASFLAGS) -c -o $@ $<
-$(ARCHOBJ_DIR)/%.o: arch/x86_64/%.c
-	@mkdir -p $(ARCHOBJ_DIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(ARCHOBJ_DIR)/%.o: arch/x86_64/%.S
-	@mkdir -p $(ARCHOBJ_DIR)
-	@mkdir -p $(ARCHOBJ_DIR)/lib
-	$(CC) $(ASFLAGS) -c -o $@ $<
-
-$(DOBJ_DIR)/%.o: drivers/%.c
-	@mkdir -p $(DOBJ_DIR)
-	$(CC) $(CFLAGS) -c -o $@ $<
-
-$(DOBJ_DIR)/%.o: drivers/%.S
-	@mkdir -p $(DOBJ_DIR)
-	$(CC) $(ASFLAGS) -c -o $@ $<
-
-.c.o:
-	$(CC) $(MODULEC_FLAGS) -c $< -o $@
-.S.o:
-	$(CC) $(ASFLAGS)  -c -o $@ $<
+# path of head files
+INCLUDES = -I./head
 
 miniOS.img: bootblock
 	dd if=/dev/zero of=miniOS.img count=10000
 	dd if=bootblock of=miniOS.img conv=notrunc
+#	dd if=kernel.elf of=miniOS.img seek=1 conv=notrunc
 
-bootblock: bootasm.S bootmain.c
-	$(CC) $(CFLAGS) -fno-pic -O -nostdinc -I. -c bootmain.c
-	$(CC) $(CFLAGS) -fno-pic -nostdinc -I. -c bootasm.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o bootblock.o bootasm.o bootmain.o
-	$(OBJDUMP) -S bootblock.o > bootblock.asm
-	$(OBJCOPY) -S -O binary -j .text bootblock.o bootblock 
-	./sign.pl bootblock
+bootblock: bootload/bootasm.S bootload/bootmain.c
+	@mkdir out
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -I. -o out/bootmain.o -c bootload/bootmain.c
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -nostdinc -I. -o out/bootasm.o -c bootload/bootasm.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
+	$(OBJDUMP) -S out/bootblock.o > out/bootblock.asm
+	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
+	./bootload/sign.pl bootblock
 
-clean: 
-	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-	initcode initcode.out kernel miniOS.img fs.img kernelmemfs \
-	miniOSmemfs.img mkfs .gdbinit
+#clean: 
+#	rm -rf out/*.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
+#	*.o *.d *.asm *.sym vectors.S bootblock entryother \
+#	initcode initcode.out kernel miniOS.img fs.img kernelmemfs \
+#	miniOSmemfs.img mkfs .gdbinit
+clean:
+	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" -o -name "bootblock" -o -name "*.img" \
+	|xargs rm -rfv
+	rm -rf out
 
 
 ifndef CPUS

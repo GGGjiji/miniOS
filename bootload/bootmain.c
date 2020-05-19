@@ -1,4 +1,3 @@
-
 /*
 void bootmain(void)
 {
@@ -9,6 +8,7 @@ void bootmain(void)
   }
 }
 */
+
 
 void bootmain(void)
 {
@@ -24,3 +24,4 @@ void bootmain(void)
 	*p++ = 108|0x700;	//	l
 	*p++ = 100|0x700;	//	d
 }
+
