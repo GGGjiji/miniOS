@@ -36,14 +36,6 @@ QEMU = $(shell if which qemu > /dev/null; \
 	echo "***" 1>&2; exit 1)
 endif
 
-# Disable PIE when possible (for Ubuntu 16.10 toolchain)
-ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
-CFLAGS += -fno-pie -no-pie
-endif
-ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
-CFLAGS += -fno-pie -nopie
-endif
-
 CC = $(CROSS_COMPILE)gcc
 AS = $(CROSS_COMPILE)gas
 LD = $(CROSS_COMPILE)ld
@@ -57,13 +49,22 @@ CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 &
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
 
+# Disable PIE when possible (for Ubuntu 16.10 toolchain)
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]no-pie'),)
+CFLAGS += -fno-pie -no-pie
+endif
+ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
+CFLAGS += -fno-pie -nopie
+endif
+
+
 # path of head files
 INCLUDES = -I./head
 
-miniOS.img: bootblock
+miniOS.img: bootblock kernel.elf
 	dd if=/dev/zero of=miniOS.img count=10000
 	dd if=bootblock of=miniOS.img conv=notrunc
-#	dd if=kernel.elf of=miniOS.img seek=1 conv=notrunc
+	dd if=kernel.elf of=miniOS.img seek=1 conv=notrunc
 
 bootblock: bootload/bootasm.S bootload/bootmain.c
 	@mkdir out
@@ -74,11 +75,12 @@ bootblock: bootload/bootasm.S bootload/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
 	./bootload/sign.pl bootblock
 
-#clean: 
-#	rm -rf out/*.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
-#	*.o *.d *.asm *.sym vectors.S bootblock entryother \
-#	initcode initcode.out kernel miniOS.img fs.img kernelmemfs \
-#	miniOSmemfs.img mkfs .gdbinit
+kernel.elf: kernel/entry64.S kernel/kernel.ld
+	$(CC) $(ASFLAGS) -o out/entry.o -c kernel/entry64.S
+	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o kernel.elf out/entry.o
+	$(OBJDUMP) -S kernel.elf > out/kernel.asm
+	$(OBJDUMP) -t kernel.elf | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
+	
 clean:
 	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" -o -name "bootblock" -o -name "*.img" \
 	|xargs rm -rfv
