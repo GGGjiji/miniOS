@@ -56,15 +56,15 @@ endif
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
-
+CFLAGS+=-fPIC
 
 # path of head files
 INCLUDES = -I./head
 
-miniOS.img: bootblock kernel.elf
+miniOS.img: bootblock kernel
 	dd if=/dev/zero of=miniOS.img count=10000
 	dd if=bootblock of=miniOS.img conv=notrunc
-	dd if=kernel.elf of=miniOS.img seek=1 conv=notrunc
+	dd if=kernel of=miniOS.img seek=1 conv=notrunc
 
 bootblock: bootload/bootasm.S bootload/bootmain.c
 	@mkdir out
@@ -75,14 +75,15 @@ bootblock: bootload/bootasm.S bootload/bootmain.c
 	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
 	./bootload/sign.pl bootblock
 
-kernel.elf: kernel/entry64.S kernel/kernel.ld
-	$(CC) $(ASFLAGS) -o out/entry.o -c kernel/entry64.S
-	$(LD) $(LDFLAGS) -T kernel/kernel.ld -o kernel.elf out/entry.o
-	$(OBJDUMP) -S kernel.elf > out/kernel.asm
-	$(OBJDUMP) -t kernel.elf | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
+kernel: Kernel/entry64.S Kernel/kernel.ld
+	$(CC) $(INCLUDES) -m32 -gdwarf-2 -Wa,-divide -o out/entry64.o -c Kernel/entry64.S
+	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry64.o
+	$(OBJDUMP) -S kernel > out/kernel.asm
+	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
 	
 clean:
-	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" -o -name "bootblock" -o -name "*.img" \
+	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" \
+	-o -name "bootblock" -o -name "*.img" -o -name "kernel" \
 	|xargs rm -rfv
 	rm -rf out
 
