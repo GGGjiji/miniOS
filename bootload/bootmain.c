@@ -1,85 +1,52 @@
-/*
-void bootmain(void)
-{
-	short *p = (short *)0xb8000;
-	*p++ = 72|0x700; 	//	h
-	*p++ = 101|0x700;	//	e
-	*p++ = 108|0x700;	//	l
-	*p++ = 108|0x700;	//	l
-	*p++ = 111|0x700;	//	o
-	*p++ = 87|0x700;	//	w
-	*p++ = 111|0x700;	//	o
-	*p++ = 114|0x700;	//	r
-	*p++ = 108|0x700;	//	l
-	*p++ = 100|0x700;	//	d
-}
-*/
+// Boot loader.
+//
+// Part of the boot block, along with bootasm.S, which calls bootmain().
+// bootasm.S has put the processor into protected 32-bit mode.
+// bootmain() loads an ELF kernel image from the disk starting at
+// sector 1 and then jumps to the kernel entry routine.
 
 #include "types.h"
+#include "elf.h"
 #include "x86.h"
+#include "memlayout.h"
 
 #define SECTSIZE  512
 
 void readseg(uchar*, uint, uint);
 
-struct mbheader {
-  uint32 magic;
-  uint32 flags;
-  uint32 checksum;
-  uint32 header_addr;
-  uint32 load_addr;
-  uint32 load_end_addr;
-  uint32 bss_end_addr;
-  uint32 entry_addr;
-};
-void
-bootmain(void)
+void bootmain(void)
 {
-  struct mbheader *hdr;
+  struct elfhdr *elf;
+  struct proghdr *ph, *eph;
   void (*entry)(void);
-  uint32 *x;
-  uint n;
+  uchar* pa;
 
-  x = (uint32*) 0x10000; // scratch space
+  elf = (struct elfhdr*)0x10000;  // scratch space
 
-  // multiboot header must be in the first 8192 bytes
-  readseg((uchar*)x, 8192, 0);
+  // Read 1st page off disk
+  readseg((uchar*)elf, 4096, 0);
 
-  for (n = 0; n < 8192/4; n++)
-    if (x[n] == 0x1BADB002)
-      if ((x[n] + x[n+1] + x[n+2]) == 0)
-        goto found_it;
+  // Is this an ELF executable?
+  if(elf->magic != ELF_MAGIC)
+    return;  // let bootasm.S handle error
 
-  // failure
-  return;
+  // Load each program segment (ignores ph flags).
+  ph = (struct proghdr*)((uchar*)elf + elf->phoff);
+  eph = ph + elf->phnum;
+  for(; ph < eph; ph++){
+    pa = (uchar*)ph->paddr;
+    readseg(pa, ph->filesz, ph->off);
+    if(ph->memsz > ph->filesz)
+      stosb(pa + ph->filesz, 0, ph->memsz - ph->filesz);
+  }
 
-found_it:
-  hdr = (struct mbheader *) (x + n);
-
-  if (!(hdr->flags & 0x10000)) //加载到1M位置，要跟kernel.ld匹配
-    return; // does not have load_* fields, cannot proceed
-  if (hdr->load_addr > hdr->header_addr)
-    return; // invalid;
-  if (hdr->load_end_addr < hdr->load_addr)
-    return; // no idea how much to load
-
-  readseg((uchar*) hdr->load_addr,
-    (hdr->load_end_addr - hdr->load_addr),
-    (n * 4) - (hdr->header_addr - hdr->load_addr));
-
-  // If too much RAM was allocated, then zero redundant RAM
-  if (hdr->bss_end_addr > hdr->load_end_addr)
-    stosb((void*) hdr->load_end_addr, 0,
-      hdr->bss_end_addr - hdr->load_end_addr);
-
-  // Call the entry point from the multiboot header.
+  // Call the entry point from the ELF header.
   // Does not return!
-  entry = (void(*)(void))(hdr->entry_addr);
+  entry = (void(*)(void))(elf->entry);
   entry();
 }
 
-static void
-waitdisk(void)
+void waitdisk(void)
 {
   // Wait for disk ready.
   while((inb(0x1F7) & 0xC0) != 0x40)
@@ -87,8 +54,7 @@ waitdisk(void)
 }
 
 // Read a single sector at offset into dst.
-static void
-readsect(void *dst, uint offset)
+void readsect(void *dst, uint offset)
 {
   // Issue command.
   waitdisk();

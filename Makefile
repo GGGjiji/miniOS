@@ -68,16 +68,17 @@ miniOS.img: bootblock kernel
 
 bootblock: bootload/bootasm.S bootload/bootmain.c
 	@mkdir out
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -I. -o out/bootmain.o -c bootload/bootmain.c
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -nostdinc -I. -o out/bootasm.o -c bootload/bootasm.S
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/bootmain.o -c bootload/bootmain.c
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -nostdinc -o out/bootasm.o -c bootload/bootasm.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
 	$(OBJDUMP) -S out/bootblock.o > out/bootblock.asm
 	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
 	./bootload/sign.pl bootblock
 
-kernel: Kernel/entry64.S Kernel/kernel.ld
-	$(CC) $(INCLUDES) -m32 -gdwarf-2 -Wa,-divide -o out/entry64.o -c Kernel/entry64.S
-	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry64.o
+kernel: Kernel/entry.S Kernel/kernel.ld
+	$(CC) $(INCLUDES) -m32 -gdwarf-2 -Wa,-divide -o out/entry.o -c Kernel/entry.S
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/main.o -c src/main.c
+	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry.o out/main.o
 	$(OBJDUMP) -S kernel > out/kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
 	
