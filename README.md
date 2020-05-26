@@ -1,6 +1,34 @@
 # miniOS
 A small 32-bit OS 
 
+### File Structure
+.
+├── bootload
+│   ├── bootasm.S
+│   ├── bootmain.c
+│   └── sign.pl
+├── head
+│   ├── asm.h
+│   ├── defs.h
+│   ├── elf.h
+│   ├── memlayout.h
+│   ├── mmu.h
+│   ├── param.h
+│   ├── proc.h
+│   ├── types.h
+│   └── x86.h
+├── Kernel
+│   ├── entry.S
+│   └── kernel.ld
+├── Makefile
+├── README.md
+└── src
+    └── main.c
+
+#### bootload
+See more detailed explanation at this site [personal blog](https://blog.csdn.net/DWLVXW0325/article/details/106344099).
+
+### update log
 #### 2020.5.17
 Only have bootblock process. Print "HelloWorld" on screen.
 
