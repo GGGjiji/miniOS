@@ -26,7 +26,8 @@ A small 32-bit OS
     └── main.c
 
 #### bootload
-See more detailed explanation at this site [personal blog](https://blog.csdn.net/DWLVXW0325/article/details/106344099).
+See more detailed explanation at this site [bootasm.S](https://blog.csdn.net/DWLVXW0325/article/details/106344099).
+[bootmain.c](https://blog.csdn.net/DWLVXW0325/article/details/106378930).
 
 ### update log
 #### 2020.5.17
