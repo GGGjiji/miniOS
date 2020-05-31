@@ -44,7 +44,7 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
         > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
 
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
@@ -59,7 +59,7 @@ endif
 CFLAGS+=-fPIC
 
 # path of head files
-INCLUDES = -I./head
+INCLUDES = -I ./head
 
 miniOS.img: bootblock kernel
 	dd if=/dev/zero of=miniOS.img count=10000
@@ -77,8 +77,9 @@ bootblock: bootload/bootasm.S bootload/bootmain.c
 
 kernel: Kernel/entry.S Kernel/kernel.ld
 	$(CC) $(INCLUDES) -m32 -gdwarf-2 -Wa,-divide -o out/entry.o -c Kernel/entry.S
+	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/print_uart.o -c src/print_uart.c
 	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/main.o -c src/main.c
-	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry.o out/main.o
+	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry.o out/print_uart.o out/main.o
 	$(OBJDUMP) -S kernel > out/kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
 	

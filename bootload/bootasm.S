@@ -40,6 +40,9 @@ start32:
   movw    $0, %ax                 # Zero segments not ready for use
   movw    %ax, %fs                # -> FS
   movw    %ax, %gs                # -> GS
+  movw	  $0x3f8,%dx
+  movb 	  $0x41, %al     #41h='A'
+#  outb    %dx,%al     
 
   # Set up the stack pointer and call into C.
   movl    $start, %esp

@@ -53,4 +53,4 @@ typedef uintp pde_t;
 /* this is a special 64bit data type that is 8-byte aligned */
 #define aligned_u64 __u64 __attribute__((aligned(8)))
 
-#endif /* _YAOS_TYPES_H_ */
+#endif

@@ -5,22 +5,24 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+#include "user.h"
+#include "print_uart.h"
 
 extern pde_t *kpgdir;
 extern char end[]; // first address after kernel loaded from ELF file
 
-// Bootstrap processor starts running C code here.
-// Allocate a real stack and switch to it, first
-// doing some setup required for memory allocator to work.
-int
-main(void)
+int main(void)
 {
-  char *w="Hello \nWorld!";
+
+  char *w="Hello World!";
   short *p=(short *)0xb8000;
   int i;
   for (i=0;i<12;i++) {
     *p++=w[i]|0x700;
   }
+
+  int out = print_uart();
+  (void)out;
   for(;;);
 }
 
