@@ -21,7 +21,7 @@ int main(void)
     *p++=w[i]|0x700;
   }
 
-  int out = print_uart();
+  int out = print_uart(w);
   (void)out;
   for(;;);
 }

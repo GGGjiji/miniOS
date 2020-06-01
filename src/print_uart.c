@@ -37,21 +37,10 @@ void uart_putc(int c)
     outb(c, COM1 + 0);
 }
 
-int print_uart(void)
+int print_uart(const char *fmt)
 {
     uart_early_init();
-//  "hello,world!"
-    uart_putc(72);
-    uart_putc(101);
-    uart_putc(108);
-    uart_putc(108);
-    uart_putc(111);
-    uart_putc(44);
-    uart_putc(87);
-    uart_putc(111);
-    uart_putc(114);
-    uart_putc(108);
-    uart_putc(100);
-    uart_putc(33);
+    for(int i = 0; fmt[i]; i++)
+	uart_putc(fmt[i]);
     return 0;
 }
