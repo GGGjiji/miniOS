@@ -21,7 +21,9 @@ int main(void)
     *p++=w[i]|0x700;
   }
 
-  int out = print_uart(w);
+//  int out = print_uart(w);
+  int data = 45;
+  int out = print_uart("hello,%d,world",data);
   (void)out;
   for(;;);
 }

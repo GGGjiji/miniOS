@@ -37,10 +37,58 @@ void uart_putc(int c)
     outb(c, COM1 + 0);
 }
 
-int print_uart(const char *fmt)
+void uart_putint(int xx, int base, int sgn)
 {
-    uart_early_init();
-    for(int i = 0; fmt[i]; i++)
-	uart_putc(fmt[i]);
+  static char digits[] = "0123456789ABCDEF";
+  char buf[16];
+  int i, neg;
+  uint x;
+
+  neg = 0;
+  if(sgn && xx < 0){
+    neg = 1;
+    x = -xx;
+  } else {
+    x = xx;
+  }
+
+  i = 0;
+  do{
+    buf[i++] = digits[x % base];
+  }while((x /= base) != 0);
+  if(neg)
+    buf[i++] = '-';
+  while(--i >= 0)
+    uart_putc(buf[i]);
+}
+
+int print_uart(const char *fmt, ...)
+{
+    	uart_early_init();
+	int state,i,c;
+	state = 0;
+	uint *ap;
+	ap = (uint*)(void*)&fmt + 1;
+	for(i = 0; fmt[i];i ++)
+	{
+		c = fmt[i] & 0xff;
+		if(state == 0){
+			if(c == '%'){
+				state = '%';		
+			}else{
+				uart_putc(c);
+			}
+		} else if(state == '%'){
+			if(c == 'd'){
+				uart_putint(*ap,10,1);
+				ap++;
+			}
+			else {
+				uart_putc('%');
+				uart_putc(c);
+			}
+			state = 0;
+		}
+	}
     return 0;
 }
