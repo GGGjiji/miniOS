@@ -83,6 +83,20 @@ int print_uart(const char *fmt, ...)
 				uart_putint(*ap,10,1);
 				ap++;
 			}
+			else if(c == 'x'){
+				uart_putint(*ap,16,1);
+				ap++;
+			}
+			else if(c == 's'){
+				char *s = (char*)*ap;
+				ap++;
+				if(s == 0)
+				  s = "(null)";
+				while(*s != 0){
+				  uart_putc(*s);
+				  s++;
+				}
+			}
 			else {
 				uart_putc('%');
 				uart_putc(c);

@@ -23,7 +23,8 @@ int main(void)
 
 //  int out = print_uart(w);
   int data = 45;
-  int out = print_uart("hello,%d,world",data);
+  char *s = "- by GGGjiji!";
+  int out = print_uart("hello,world\n%s",s);
   (void)out;
   for(;;);
 }
