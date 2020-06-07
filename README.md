@@ -45,3 +45,6 @@ Fix the problem with kernel.(although copy the code from xv6 with 32-bit OS syst
 
 ### 2020.5.31
 Add debug function -- Print_uart(),which uses UART to print string on the terminal.
+
+### 2020.6.7
+Add kalloc function, but still has some problems.
