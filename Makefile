@@ -2,6 +2,10 @@
 .PHONY: all
 all: miniOS.img
 
+OBJS = \
+	out/main.o	\
+	out/print_uart.o	\
+
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
 CROSS_COMPILE := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/dev/null 2>&1; \
@@ -44,7 +48,7 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
         > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
 
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -O -nostdinc
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 LDFLAGS += -m $(shell $(LD) -V | grep elf_i386 2>/dev/null | head -n 1)
@@ -68,17 +72,21 @@ miniOS.img: bootblock kernel
 
 bootblock: bootload/bootasm.S bootload/bootmain.c
 	@mkdir out
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/bootmain.o -c bootload/bootmain.c
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -nostdinc -o out/bootasm.o -c bootload/bootasm.S
+	$(CC) $(INCLUDES) $(CFLAGS) -o out/bootmain.o -c bootload/bootmain.c
+	$(CC) $(INCLUDES) $(CFLAGS) -o out/bootasm.o -c bootload/bootasm.S
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
 	$(OBJDUMP) -S out/bootblock.o > out/bootblock.asm
 	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
 	./bootload/sign.pl bootblock
 
-kernel: Kernel/entry.S Kernel/kernel.ld
-	$(CC) $(INCLUDES) -m32 -gdwarf-2 -Wa,-divide -o out/entry.o -c Kernel/entry.S
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/print_uart.o -c src/print_uart.c
-	$(CC) $(INCLUDES) $(CFLAGS) -fno-pic -O -nostdinc -o out/main.o -c src/main.c
+out/%.o :src/%.c
+	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<
+	
+
+kernel: Kernel/entry.S Kernel/kernel.ld $(OBJS)
+	$(CC) $(INCLUDES) $(CFLAGS) -o out/entry.o -c Kernel/entry.S
+#	$(CC) $(INCLUDES) $(CFLAGS) -o out/print_uart.o -c src/print_uart.c
+#	$(CC) $(INCLUDES) $(CFLAGS) -o out/main.o -c src/main.c
 	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry.o out/print_uart.o out/main.o
 	$(OBJDUMP) -S kernel > out/kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym

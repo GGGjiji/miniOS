@@ -13,19 +13,10 @@ extern char end[]; // first address after kernel loaded from ELF file
 
 int main(void)
 {
-
-  char *w="Hello World!";
-  short *p=(short *)0xb8000;
-  int i;
-  for (i=0;i<12;i++) {
-    *p++=w[i]|0x700;
-  }
-
-//  int out = print_uart(w);
-  int data = 45;
   char *s = "- by GGGjiji!";
   int out = print_uart("hello,world\n%s",s);
   (void)out;
+//  kinit1(end,P2V(4*1024*1024));
   for(;;);
 }
 
