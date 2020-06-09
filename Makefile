@@ -5,6 +5,7 @@ all: miniOS.img
 OBJS = \
 	out/main.o	\
 	out/print_uart.o	\
+	out/entry.o
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
@@ -81,13 +82,12 @@ bootblock: bootload/bootasm.S bootload/bootmain.c
 
 out/%.o :src/%.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<
-	
 
-kernel: Kernel/entry.S Kernel/kernel.ld $(OBJS)
-	$(CC) $(INCLUDES) $(CFLAGS) -o out/entry.o -c Kernel/entry.S
-#	$(CC) $(INCLUDES) $(CFLAGS) -o out/print_uart.o -c src/print_uart.c
-#	$(CC) $(INCLUDES) $(CFLAGS) -o out/main.o -c src/main.c
-	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel out/entry.o out/print_uart.o out/main.o
+out/%.o :Kernel/%.S
+	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<	
+
+kernel: Kernel/kernel.ld $(OBJS)
+	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel $(OBJS)
 	$(OBJDUMP) -S kernel > out/kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
 	
