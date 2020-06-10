@@ -29,11 +29,11 @@ seta20.2:
   movl    %cr0, %eax
   orl     $CR0_PE, %eax
   movl    %eax, %cr0
-  ljmp    $(SEG_KCODE<<3), $start32
+  ljmp    $0x8, $start32
 
 .code32  # Tell assembler to generate 32-bit code now.
 start32:
-  movw    $(SEG_KDATA<<3), %ax    # Our data segment selector
+  movw    $0x10, %ax    # Our data segment selector
   movw    %ax, %ds                # -> DS: Data Segment
   movw    %ax, %es                # -> ES: Extra Segment
   movw    %ax, %ss                # -> SS: Stack Segment
@@ -41,8 +41,7 @@ start32:
   movw    %ax, %fs                # -> FS
   movw    %ax, %gs                # -> GS
   movw	  $0x3f8,%dx
-  movb 	  $0x41, %al     #41h='A'
-#  outb    %dx,%al     
+  movb 	  $0x41, %al     #41h='A'     
 
   # Set up the stack pointer and call into C.
   movl    $start, %esp
