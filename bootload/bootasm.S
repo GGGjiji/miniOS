@@ -29,11 +29,11 @@ seta20.2:
   movl    %cr0, %eax
   orl     $CR0_PE, %eax
   movl    %eax, %cr0
-  ljmp    $0x8, $start32
+  jmp     $0x8, $start32
 
 .code32  # Tell assembler to generate 32-bit code now.
 start32:
-  movw    $0x10, %ax    # Our data segment selector
+  movw    $0x10, %ax    	  # Our data segment selector
   movw    %ax, %ds                # -> DS: Data Segment
   movw    %ax, %es                # -> ES: Extra Segment
   movw    %ax, %ss                # -> SS: Stack Segment
