@@ -3,9 +3,11 @@
 all: miniOS.img
 
 OBJS = \
-	out/main.o	\
+	out/main.o		\
 	out/print_uart.o	\
-	out/entry.o
+	out/entry.o		\
+	out/kalloc.o		\
+	out/spinlock.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE

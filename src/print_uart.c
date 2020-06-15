@@ -106,3 +106,8 @@ int print_uart(const char *fmt, ...)
 	}
     return 0;
 }
+
+void panic(char *s)
+{
+	print_uart(s);
+}

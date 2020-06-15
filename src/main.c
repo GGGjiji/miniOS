@@ -16,7 +16,7 @@ int main(void)
   char *s = "- by GGGjiji!";
   int out = print_uart("hello,world\n%s",s);
   (void)out;
-//  kinit1(end,P2V(4*1024*1024));
+  kinit1(end,P2V(4*1024*1024));
   for(;;);
 }
 
