@@ -18,9 +18,9 @@ void initlock(struct spinlock *lk, char *name)
 
 void acquire(struct spinlock *lk)
 {
-  pushcli(); // disable interrupts to avoid deadlock.
-  if(holding(lk))
-    panic("acquire");
+//  pushcli(); // disable interrupts to avoid deadlock.
+//  if(holding(lk))
+//    panic("acquire");
 
   // The xchg is atomic.
   while(xchg(&lk->locked, 1) != 0)
@@ -36,8 +36,8 @@ void acquire(struct spinlock *lk)
 // Release the lock.
 void release(struct spinlock *lk)
 {
-  if(!holding(lk))
-    panic("release");
+//  if(!holding(lk))
+//    panic("release");
 
   lk->pcs[0] = 0;
   lk->cpu = 0;
@@ -46,6 +46,6 @@ void release(struct spinlock *lk)
 
   asm volatile("movl $0, %0" : "+m" (lk->locked) : );
 
-  popcli();
+//  popcli();
 }
 

@@ -7,7 +7,8 @@ OBJS = \
 	out/print_uart.o	\
 	out/entry.o		\
 	out/kalloc.o		\
-	out/spinlock.o		
+	out/spinlock.o		\
+	out/string.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
