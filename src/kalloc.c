@@ -29,8 +29,7 @@ struct {
 // the pages mapped by entrypgdir on free list.
 // 2. main() calls kinit2() with the rest of the physical pages
 // after installing a full page table that maps them on all cores.
-void
-kinit1(void *vstart, void *vend)
+void kinit1(void *vstart, void *vend)
 {
   initlock(&kmem.lock, "kmem");
   kmem.use_lock = 0;
@@ -39,6 +38,13 @@ kinit1(void *vstart, void *vend)
   print_uart(s);
 }
 
+void kinit2(void *vstart, void *vend)
+{
+  freerange(vstart, vend);
+  kmem.use_lock = 1;
+  char *s = "kernel init 2!\n";
+  print_uart(s);
+}
 
 void freerange(void *vstart, void *vend)
 {
@@ -67,3 +73,19 @@ void kfree(char *v)
     release(&kmem.lock);
 }
 
+// Allocate one 4096-byte page of physical memory.
+// Returns a pointer that the kernel can use.
+// Returns 0 if the memory cannot be allocated.
+char* kalloc(void)
+{
+  struct run *r;
+
+  if(kmem.use_lock)
+    acquire(&kmem.lock);
+  r = kmem.freelist;
+  if(r)
+    kmem.freelist = r->next;
+  if(kmem.use_lock)
+    release(&kmem.lock);
+  return (char*)r;
+}

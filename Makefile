@@ -8,7 +8,8 @@ OBJS = \
 	out/entry.o		\
 	out/kalloc.o		\
 	out/spinlock.o		\
-	out/string.o		
+	out/string.o		\
+	out/vm.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE

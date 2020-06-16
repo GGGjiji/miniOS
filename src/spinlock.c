@@ -48,4 +48,3 @@ void release(struct spinlock *lk)
 
 //  popcli();
 }
-
