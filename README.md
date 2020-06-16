@@ -48,3 +48,6 @@ Add debug function -- Print_uart(),which uses UART to print string on the termin
 
 ### 2020.6.7
 Add kalloc function, but still has some problems.
+
+### recommendation
+recommendation: [xv6: how kernel boots](https://www.dazhuanlan.com/2020/03/20/5e73a590350d0/)
