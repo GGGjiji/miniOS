@@ -9,7 +9,9 @@ OBJS = \
 	out/kalloc.o		\
 	out/spinlock.o		\
 	out/string.o		\
-	out/vm.o		
+	out/vm.o		\
+	out/mp.o		\
+	out/lapic.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
