@@ -18,7 +18,8 @@ int main(void)
   (void)out;
   kinit1(end,P2V(4*1024*1024));
   kvmalloc();
-  mpinit(); 
+  mpinit();
+  lapicinit();
   for(;;);
 }
 
