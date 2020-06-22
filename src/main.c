@@ -20,6 +20,7 @@ int main(void)
   kvmalloc();
   mpinit();
   lapicinit();
+  seginit();
   for(;;);
 }
 
