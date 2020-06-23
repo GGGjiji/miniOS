@@ -21,6 +21,7 @@ int main(void)
   mpinit();
   lapicinit();
   seginit();
+  picinit();
   for(;;);
 }
 

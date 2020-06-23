@@ -11,7 +11,8 @@ OBJS = \
 	out/string.o		\
 	out/vm.o		\
 	out/mp.o		\
-	out/lapic.o		
+	out/lapic.o		\
+	out/picirq.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
