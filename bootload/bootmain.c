@@ -49,6 +49,7 @@ void bootmain(void)
 void waitdisk(void)
 {
   // Wait for disk ready.
+  // 0x1F7 R，状态寄存器，第 6、7 位分别为1,代表驱动器准备好，驱动器忙.
   while((inb(0x1F7) & 0xC0) != 0x40)
     ;
 }
