@@ -28,6 +28,7 @@ A small 32-bit OS
 #### bootload
 See more detailed explanation at this site [bootasm.S](https://blog.csdn.net/DWLVXW0325/article/details/106344099).
 [bootmain.c](https://blog.csdn.net/DWLVXW0325/article/details/106378930).
+[访问硬盘数据控制](https://www.bookstack.cn/read/simple_os_book/zh-chapter-1-access_harddisk.md)
 
 ### update log
 #### 2020.5.17
