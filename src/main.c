@@ -22,6 +22,7 @@ int main(void)
   lapicinit();
   seginit();
   picinit();
+  ioapicinit();
   for(;;);
 }
 
