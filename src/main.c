@@ -23,6 +23,7 @@ int main(void)
   seginit();
   picinit();
   ioapicinit();
+  consoleinit();
   for(;;);
 }
 
