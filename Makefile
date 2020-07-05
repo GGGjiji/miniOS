@@ -14,7 +14,8 @@ OBJS = \
 	out/lapic.o		\
 	out/picirq.o		\
 	out/ioapic.o		\
-	out/console.o
+	out/console.o		\
+	out/kbd.o		
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
