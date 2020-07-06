@@ -23,7 +23,12 @@ int main(void)
   seginit();
   picinit();
   ioapicinit();
-*/  consoleinit();
+  consoleinit();
+*/
+  while(1)
+  {
+	kbdgetc();
+  }
   for(;;);
 }
 
