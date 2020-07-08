@@ -16,7 +16,6 @@ int kbdgetc(void)
   if((st & KBS_DIB) == 0)
     return -1;
   data = inb(KBDATAP);
-  print_uart(data);
 
   if(data == 0xE0){
     shift |= E0ESC;
@@ -41,6 +40,7 @@ int kbdgetc(void)
     else if('A' <= c && c <= 'Z')
       c += 'a' - 'A';
   }
-  print_uart(c);
+  char s = c;
+  print_uart(&s);
   return c;
 }
