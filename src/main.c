@@ -29,7 +29,6 @@ int main(void)
   {
 	kbdgetc();
   }
-  for(;;);
 }
 
 pde_t entrypgdir[];  // For entry.S
