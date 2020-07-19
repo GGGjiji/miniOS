@@ -39,7 +39,7 @@ void uart_early_init(void)
 void uart_putc(int c)
 {
 //    outb(c, COM1 + 0);
-    cgaputc(c);
+//    cgaputc(c);
 }
 
 void uart_putint(int xx, int base, int sgn)
@@ -117,10 +117,10 @@ void panic(char *s)
 	print_uart(s);
 }
 
+static  ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
 static void cgaputc(int c)
 {
-  ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
   int pos;
 
   // Cursor position: col + 80*row.
@@ -138,13 +138,13 @@ static void cgaputc(int c)
 
   if(pos < 0 || pos > 25*80)
     panic("pos under/overflow");
-/*
+
   if((pos/80) >= 24){  // Scroll up.
     memmove(crt, crt+80, sizeof(crt[0])*23*80);
     pos -= 80;
     memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
   }
-*/
+
   outb(CRTPORT, 14);
   outb(CRTPORT+1, pos>>8);
   outb(CRTPORT, 15);

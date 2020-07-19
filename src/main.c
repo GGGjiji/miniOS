@@ -6,6 +6,7 @@
 #include "proc.h"
 #include "x86.h"
 #include "user.h"
+#include "kbd.h"
 #include "print_uart.h"
 
 extern pde_t *kpgdir;
