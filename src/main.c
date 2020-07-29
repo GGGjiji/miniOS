@@ -17,7 +17,7 @@ int main(void)
   char *s = "by GGGjiji!\n";
   int out = print_uart("hello,world\n%s",s);
   (void)out;
-/*  kinit1(end,P2V(4*1024*1024));
+  kinit1(end,P2V(4*1024*1024));
   kvmalloc();
   mpinit();
   lapicinit();
@@ -25,11 +25,10 @@ int main(void)
   picinit();
   ioapicinit();
   consoleinit();
-*/
-  while(1)
+/*  while(1)
   {
 	kbdgetc();
-  }
+  }*/
 }
 
 pde_t entrypgdir[];  // For entry.S

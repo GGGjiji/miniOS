@@ -1,8 +1,6 @@
 #include "types.h"
 #include "memlayout.h"
 #define COM1	0x3f8
-#define BACKSPACE 0x100
-#define CRTPORT 0x3d4
 static int uart;  
 static void cgaputc(int c);
 static inline void outb(u8 val, u16 port)
@@ -38,8 +36,8 @@ void uart_early_init(void)
 
 void uart_putc(int c)
 {
-//    outb(c, COM1 + 0);
-//    cgaputc(c);
+    outb(c, COM1 + 0);
+    cgaputc(c);
 }
 
 void uart_putint(int xx, int base, int sgn)
@@ -63,8 +61,9 @@ void uart_putint(int xx, int base, int sgn)
   }while((x /= base) != 0);
   if(neg)
     buf[i++] = '-';
-  while(--i >= 0)
+  while(--i >= 0){
     uart_putc(buf[i]);
+  }
 }
 
 int print_uart(const char *fmt, ...)
@@ -117,7 +116,10 @@ void panic(char *s)
 	print_uart(s);
 }
 
-static  ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
+//PAGEBREAK: 50
+#define BACKSPACE 0x100
+#define CRTPORT 0xd4
+static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
 
 static void cgaputc(int c)
 {

@@ -40,7 +40,8 @@ int kbdgetc(void)
     else if('A' <= c && c <= 'Z')
       c += 'a' - 'A';
   }
-  char s = c;
-  print_uart(&s);
+//  char s = c;
+//  print_uart(&s);
+  print_uart(c);
   return c;
 }
