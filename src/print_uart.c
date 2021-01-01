@@ -2,7 +2,6 @@
 #include "memlayout.h"
 #define COM1	0x3f8
 static int uart;  
-static void cgaputc(int c);
 static inline void outb(u8 val, u16 port)
 {
     asm volatile ("outb %0, %1"::"a" (val), "dN" (port));
@@ -37,7 +36,6 @@ void uart_early_init(void)
 void uart_putc(int c)
 {
     outb(c, COM1 + 0);
-    cgaputc(c);
 }
 
 void uart_putint(int xx, int base, int sgn)
@@ -68,7 +66,7 @@ void uart_putint(int xx, int base, int sgn)
 
 int print_uart(const char *fmt, ...)
 {
-    	uart_early_init();
+    uart_early_init();
 	int state,i,c;
 	state = 0;
 	uint *ap;
@@ -114,42 +112,4 @@ int print_uart(const char *fmt, ...)
 void panic(char *s)
 {
 	print_uart(s);
-}
-
-//PAGEBREAK: 50
-#define BACKSPACE 0x100
-#define CRTPORT 0xd4
-static ushort *crt = (ushort*)P2V(0xb8000);  // CGA memory
-
-static void cgaputc(int c)
-{
-  int pos;
-
-  // Cursor position: col + 80*row.
-  outb(CRTPORT, 14);
-  pos = inb(CRTPORT+1) << 8;
-  outb(CRTPORT, 15);
-  pos |= inb(CRTPORT+1);
-
-  if(c == '\n')
-    pos += 80 - pos%80;
-  else if(c == BACKSPACE){
-    if(pos > 0) --pos;
-  } else
-    crt[pos++] = (c&0xff) | 0x0700;  // black on white
-
-  if(pos < 0 || pos > 25*80)
-    panic("pos under/overflow");
-
-  if((pos/80) >= 24){  // Scroll up.
-    memmove(crt, crt+80, sizeof(crt[0])*23*80);
-    pos -= 80;
-    memset(crt+pos, 0, sizeof(crt[0])*(24*80 - pos));
-  }
-
-  outb(CRTPORT, 14);
-  outb(CRTPORT+1, pos>>8);
-  outb(CRTPORT, 15);
-  outb(CRTPORT+1, pos);
-  crt[pos] = ' ' | 0x0700;
 }

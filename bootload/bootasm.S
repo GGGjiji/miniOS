@@ -2,7 +2,6 @@
 
 .code16
 .globl start
-.global hello
 start:
   cli #关中断，bios启动的时候可能开启中断
   xorw    %ax,%ax

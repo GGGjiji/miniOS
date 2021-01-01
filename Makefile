@@ -5,8 +5,8 @@ all: miniOS.img
 OBJS = \
 	out/main.o		\
 	out/print_uart.o	\
-	out/entry.o		\
-	out/kalloc.o		\
+	out/entry.o		
+#	out/kalloc.o		\
 	out/spinlock.o		\
 	out/string.o		\
 	out/vm.o		\
@@ -82,14 +82,9 @@ miniOS.img: bootblock kernel
 	dd if=bootblock of=miniOS.img conv=notrunc
 	dd if=kernel of=miniOS.img seek=1 conv=notrunc
 
-bootblock: bootload/bootasm.S bootload/bootmain.c
+bootblock:
 	@mkdir out
-	$(CC) $(INCLUDES) $(CFLAGS) -o out/bootmain.o -c bootload/bootmain.c
-	$(CC) $(INCLUDES) $(CFLAGS) -o out/bootasm.o -c bootload/bootasm.S
-	$(LD) $(LDFLAGS) -N -e start -Ttext 0x7C00 -o out/bootblock.o out/bootasm.o out/bootmain.o
-	$(OBJDUMP) -S out/bootblock.o > out/bootblock.asm
-	$(OBJCOPY) -S -O binary -j .text out/bootblock.o bootblock 
-	./bootload/sign.pl bootblock
+	make -f ./bootload/Makefile
 
 out/%.o :src/%.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<
@@ -110,7 +105,8 @@ clean:
 
 
 ifndef CPUS
-CPUS := $(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+#CPUS := $(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
+CPUS := 1
 endif
 QEMUOPTS = -drive file=miniOS.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
 

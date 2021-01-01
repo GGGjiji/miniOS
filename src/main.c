@@ -3,10 +3,8 @@
 #include "param.h"
 #include "memlayout.h"
 #include "mmu.h"
-#include "proc.h"
 #include "x86.h"
 #include "user.h"
-#include "kbd.h"
 #include "print_uart.h"
 
 extern pde_t *kpgdir;
@@ -14,21 +12,13 @@ extern char end[]; // first address after kernel loaded from ELF file
 
 int main(void)
 {
-  char *s = "by GGGjiji!\n";
-  int out = print_uart("hello,world\n%s",s);
-  (void)out;
-  kinit1(end,P2V(4*1024*1024));
-  kvmalloc();
-  mpinit();
-  lapicinit();
-  seginit();
-  picinit();
-  ioapicinit();
-  consoleinit();
-/*  while(1)
-  {
-	kbdgetc();
-  }*/
+	char *w = "hello world123!";
+	short *p = (short *)0xb8000;
+	int i;
+	for(i = 0;i < 15;i++){
+		*p++=w[i]|0x700;
+	}
+	for(;;);
 }
 
 pde_t entrypgdir[];  // For entry.S
