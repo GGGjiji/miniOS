@@ -50,7 +50,7 @@ OBJS = \
 SRC=/home/chhss/Github/miniOS/src
 OUT=/home/chhss/Github/miniOS/out
 KS=/home/chhss/Github/miniOS/Kernel
-LD=/home/chhss/Github/miniOS/Kernel/kernel.ld
+LDFILE=/home/chhss/Github/miniOS/Kernel/kernel.ld
 ASM=/home/chhss/Github/miniOS/out/kernel.asm
 KERNEL=/home/chhss/Github/miniOS
 
@@ -60,10 +60,8 @@ $(OUT)%.o :$(SRC)%.c
 $(OUT)%.o :$(KS)%.S
 	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<	
 
-
-kernel: $(LD) $(OBJS)
-	@echo jdaioe
-	$(LD) $(LDFLAGS) -T $(LD) -o $(KERNEL)/kernel $(OBJS)
-#	$(OBJDUMP) -S $(KERNEL)/kernel > $(ASM)
-#	$(OBJDUMP) -t $(KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
+kernel:$(OBJS) $(LDFILE)
+	$(LD) $(LDFLAGS) -T $(LDFILE) -o $(KERNEL)/kernel $(OBJS)
+	$(OBJDUMP) -S $(KERNEL)/kernel > $(ASM)
+	$(OBJDUMP) -t $(KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(OUT)/kernel.sym
 	
