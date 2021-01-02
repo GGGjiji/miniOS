@@ -12,10 +12,10 @@ extern char end[]; // first address after kernel loaded from ELF file
 
 int main(void)
 {
-	char *w = "hello world123!";
+	char *w = "hello world12345!";
 	short *p = (short *)0xb8000;
 	int i;
-	for(i = 0;i < 15;i++){
+	for(i = 0;i < 17;i++){
 		*p++=w[i]|0x700;
 	}
 	for(;;);
