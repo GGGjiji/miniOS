@@ -1,21 +1,6 @@
 # Default make target
 .PHONY: all
-all: miniOS.img
-
-OBJS = \
-	out/main.o		\
-	out/print_uart.o	\
-	out/entry.o		
-#	out/kalloc.o		\
-	out/spinlock.o		\
-	out/string.o		\
-	out/vm.o		\
-	out/mp.o		\
-	out/lapic.o		\
-	out/picirq.o		\
-	out/ioapic.o		\
-	out/console.o		\
-	out/kbd.o		
+all: miniOS.img	
 
 # Cross-compiling (e.g., on Mac OS X)
 ifndef CROSS_COMPILE
@@ -86,16 +71,18 @@ bootblock:
 	@mkdir out
 	make -f ./bootload/Makefile
 
-out/%.o :src/%.c
-	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<
+#out/%.o :src/%.c
+#	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<
 
-out/%.o :Kernel/%.S
-	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<	
+#out/%.o :Kernel/%.S
+#	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<	
 
-kernel: Kernel/kernel.ld $(OBJS)
-	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel $(OBJS)
-	$(OBJDUMP) -S kernel > out/kernel.asm
-	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
+kernel:
+	make -f ./src/Makefile
+#kernel: Kernel/kernel.ld $(OBJS)
+#	$(LD) $(LDFLAGS) -T Kernel/kernel.ld -o kernel $(OBJS)
+#	$(OBJDUMP) -S kernel > out/kernel.asm
+#	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > out/kernel.sym
 	
 clean:
 	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" \
