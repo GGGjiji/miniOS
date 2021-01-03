@@ -45,7 +45,9 @@ INCLUDES = -I /home/chhss/Github/miniOS/head
 OBJS = \
 	/home/chhss/Github/miniOS/out/main.o		\
 	/home/chhss/Github/miniOS/out/print_uart.o	\
-	/home/chhss/Github/miniOS/out/entry.o		
+	/home/chhss/Github/miniOS/out/entry.o		\
+	/home/chhss/Github/miniOS/out/kalloc.o 		\
+	/home/chhss/Github/miniOS/out/string.o
 
 SRC=/home/chhss/Github/miniOS/src
 OUT=/home/chhss/Github/miniOS/out
