@@ -18,6 +18,8 @@ int main(void)
 	for(i = 0;i < 17;i++){
 		*p++=w[i]|0x700;
 	}
+	kinit1(end, P2V(4*1024*1024));
+	kvmalloc();
 	for(;;);
 }
 

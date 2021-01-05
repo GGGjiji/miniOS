@@ -40,7 +40,6 @@ clean:
 
 
 ifndef CPUS
-#CPUS := $(shell grep -c ^processor /proc/cpuinfo 2>/dev/null || sysctl -n hw.ncpu)
 CPUS := 1
 endif
 QEMUOPTS = -drive file=miniOS.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
