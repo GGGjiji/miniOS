@@ -28,7 +28,7 @@ seta20.2:
   movl    %cr0, %eax
   orl     $CR0_PE, %eax
   movl    %eax, %cr0
-  jmp     $0x8, $start32
+  ljmp     $0x8, $start32
 
 .code32  # Tell assembler to generate 32-bit code now.
 start32:
@@ -38,13 +38,18 @@ start32:
   movw    %ax, %ss                # -> SS: Stack Segment
   movw    $0, %ax                 # Zero segments not ready for use
   movw    %ax, %fs                # -> FS
-  movw    %ax, %gs                # -> GS
-  movw	  $0x3f8,%dx
-  movb 	  $0x41, %al     #41h='A'     
+  movw    %ax, %gs                # -> GS 
 
   # Set up the stack pointer and call into C.
   movl    $start, %esp
   call    bootmain
+
+  movw    $0x8a00, %ax            # 0x8a00 -> port 0x8a00
+  movw    %ax, %dx
+  outw    %ax, %dx
+  movw    $0x8ae0, %ax            # 0x8ae0 -> port 0x8a00
+  outw    %ax, %dx
+  
 spin:
   jmp     spin
 .p2align 2                                # force 4 byte alignment

@@ -10,6 +10,23 @@
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
+struct cpu core;
+
+void seginit(void)
+{
+
+  struct cpu *c;
+  // Map "logical" addresses to virtual addresses using identity map.
+  // Cannot share a CODE descriptor for both kernel and user
+  // because it would have to have DPL_USR, but the CPU forbids
+  // an interrupt from CPL=0 to DPL=3.
+  c = &core;
+  c->gdt[SEG_KCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, 0);
+  c->gdt[SEG_KDATA] = SEG(STA_W, 0, 0xffffffff, 0);
+  c->gdt[SEG_UCODE] = SEG(STA_X|STA_R, 0, 0xffffffff, DPL_USER);
+  c->gdt[SEG_UDATA] = SEG(STA_W, 0, 0xffffffff, DPL_USER);
+  lgdt(c->gdt, sizeof(c->gdt));
+}
 
 static pte_t * walkpgdir(pde_t *pgdir, const void *va, int alloc)
 {
@@ -100,8 +117,6 @@ pde_t* setupkvm(void)
   if((pgdir = (pde_t*)kalloc()) == 0)
     return 0;
   memset(pgdir, 0, PGSIZE);
-  if (P2V(PHYSTOP) > (void*)DEVSPACE)
-    panic("PHYSTOP too high");
   for(k = kmap; k < &kmap[NELEM(kmap)]; k++)
     if(mappages(pgdir, k->virt, k->phys_end - k->phys_start,
                 (uint)k->phys_start, k->perm) < 0) {
@@ -117,7 +132,6 @@ void kvmalloc(void)
 {
   kpgdir = setupkvm();
   switchkvm();
-  print_uart("set up page_dir!\n");
 }
 
 // Switch h/w page table register to the kernel-only page table,
@@ -126,7 +140,7 @@ void switchkvm(void)
 {
   lcr3(V2P(kpgdir));   // switch to the kernel page table
 }
-/*
+
 // Switch TSS and h/w page table to correspond to process p.
 void switchuvm(struct proc *p)
 {
@@ -141,7 +155,7 @@ void switchuvm(struct proc *p)
   ltr(SEG_TSS << 3);
   lcr3(V2P(p->pgdir));  // switch to process's address space
 }
-*/
+
 // Load the initcode into address 0 of pgdir.
 // sz must be less than a page.
 void inituvm(pde_t *pgdir, char *init, uint sz)

@@ -29,7 +29,6 @@ struct {
 void kinit1(void *vstart, void *vend)
 {
   freerange(vstart, vend);
-  print_uart("init the page and build memory list.\n");
 }
 
 void kinit2(void *vstart, void *vend)

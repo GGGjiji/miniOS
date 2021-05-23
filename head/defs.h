@@ -5,8 +5,6 @@ struct inode;
 struct pipe;
 struct proc;
 struct rtcdate;
-struct spinlock;
-struct sleeplock;
 struct stat;
 struct superblock;
 
@@ -115,7 +113,6 @@ void            procdump(void);
 void            scheduler(void) __attribute__((noreturn));
 void            sched(void);
 void            setproc(struct proc*);
-void            sleep(void*, struct spinlock*);
 void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
@@ -123,21 +120,6 @@ void            yield(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
-
-// spinlock.c
-void            acquire(struct spinlock*);
-void            getcallerpcs(void*, uint*);
-int             holding(struct spinlock*);
-void            initlock(struct spinlock*, char*);
-void            release(struct spinlock*);
-void            pushcli(void);
-void            popcli(void);
-
-// sleeplock.c
-void            acquiresleep(struct sleeplock*);
-void            releasesleep(struct sleeplock*);
-int             holdingsleep(struct sleeplock*);
-void            initsleeplock(struct sleeplock*, char*);
 
 // string.c
 int             memcmp(const void*, const void*, uint);
@@ -161,9 +143,7 @@ void            timerinit(void);
 
 // trap.c
 void            idtinit(void);
-extern uint     ticks;
 void            tvinit(void);
-extern struct spinlock tickslock;
 
 // uart.c
 void            uartinit(void);

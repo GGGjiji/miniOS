@@ -13,7 +13,6 @@
 #define SECTSIZE  512
 
 void readseg(uchar*, uint, uint);
-
 void bootmain(void)
 {
   struct elfhdr *elf;

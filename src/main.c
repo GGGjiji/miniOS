@@ -12,15 +12,23 @@ extern char end[]; // first address after kernel loaded from ELF file
 
 int main(void)
 {
-	char *w = "hello world12345!";
-	short *p = (short *)0xb8000;
-	int i;
-	for(i = 0;i < 17;i++){
-		*p++=w[i]|0x700;
-	}
-	kinit1(end, P2V(4*1024*1024));
+  //  virual mamory control
+  kinit1(end, P2V(4*1024*1024));
 	kvmalloc();
-	for(;;);
+  seginit();
+  //  interrupts and traps
+  picinit();
+  tvinit();
+  idtinit();
+  //  console
+  consoleinit();
+  //  disk
+  ideinit();
+  //  file
+  binit();         // buffer cache
+  kinit2(P2V(4*1024*1024), P2V(PHYSTOP));
+  userinit();
+  scheduler();
 }
 
 pde_t entrypgdir[];  // For entry.S

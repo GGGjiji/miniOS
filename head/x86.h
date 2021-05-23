@@ -1,3 +1,5 @@
+#ifndef XES
+#define XES 1
 static inline uchar
 inb(ushort port)
 {
@@ -221,4 +223,5 @@ struct trapframe {
   ushort ss;
   ushort padding6;
 };
+#endif
 #endif

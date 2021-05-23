@@ -48,7 +48,18 @@ OBJS = \
 	/home/chhss/Github/miniOS/out/entry.o		\
 	/home/chhss/Github/miniOS/out/kalloc.o 		\
 	/home/chhss/Github/miniOS/out/string.o 		\
-	/home/chhss/Github/miniOS/out/vm.o 			
+	/home/chhss/Github/miniOS/out/vm.o 			\
+	/home/chhss/Github/miniOS/out/picirq.o 		\
+	/home/chhss/Github/miniOS/out/vector.o 		\
+	/home/chhss/Github/miniOS/out/trapasm.o 	\
+	/home/chhss/Github/miniOS/out/trap.o 		\
+	/home/chhss/Github/miniOS/out/console.o 	\
+	/home/chhss/Github/miniOS/out/proc.o 		\
+	/home/chhss/Github/miniOS/out/file.o 		\
+	/home/chhss/Github/miniOS/out/ide.o 		\
+	/home/chhss/Github/miniOS/out/bio.o 		\
+	/home/chhss/Github/miniOS/out/swtch.o 		\
+	/home/chhss/Github/miniOS/out/kbd.o 		\
 
 SRC=/home/chhss/Github/miniOS/src
 OUT=/home/chhss/Github/miniOS/out
@@ -63,8 +74,13 @@ $(OUT)%.o :$(SRC)%.c
 $(OUT)%.o :$(KS)%.S
 	$(CC) $(INCLUDES) $(CFLAGS) -c -o $@ $<	
 
-kernel:$(OBJS) $(LDFILE)
-	$(LD) $(LDFLAGS) -T $(LDFILE) -o $(KERNEL)/kernel $(OBJS)
+kernel:$(OBJS) $(LDFILE) initcode
+	$(LD) $(LDFLAGS) -T $(LDFILE) -o $(KERNEL)/kernel $(OBJS) -b binary initcode
 	$(OBJDUMP) -S $(KERNEL)/kernel > $(ASM)
 	$(OBJDUMP) -t $(KERNEL)/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $(OUT)/kernel.sym
 	
+initcode: $(SRC)/initcode.S
+	$(CC) $(CFLAGS) -nostdinc $(INCLUDES) -c $(SRC)/initcode.S
+	$(LD) $(LDFLAGS) -N -e start -Ttext 0 -o initcode.out initcode.o
+	$(OBJCOPY) -S -O binary initcode.out initcode
+	$(OBJDUMP) -S initcode.o > initcode.asm

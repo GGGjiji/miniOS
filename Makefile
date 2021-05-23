@@ -35,6 +35,7 @@ kernel:
 clean:
 	find -name "*.o" -o -name "*.d" -o -name "*.d" -o -name "*.asm" \
 	-o -name "bootblock" -o -name "*.img" -o -name "kernel" \
+	-o -name "initcode.out" -o -name "initcode" \
 	|xargs rm -rfv
 	rm -rf out
 
@@ -42,7 +43,7 @@ clean:
 ifndef CPUS
 CPUS := 1
 endif
-QEMUOPTS = -drive file=miniOS.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+QEMUOPTS = -drive file=miniOS.img,index=0,media=disk,format=raw -smp 1 -m 512 $(QEMUEXTRA)
 
 qemu: miniOS.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
