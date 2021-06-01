@@ -30,21 +30,20 @@ void idtinit(void)
 //PAGEBREAK: 41
 void trap(struct trapframe *tf)
 {
+  if(tf->trapno == T_SYSCALL){
+    myproc()->tf = tf;
+    syscall();
+    return;
+  }
   switch(tf->trapno){
     case 32:
       //  timer();
-//      print_uart("%d!",tf->trapno);
-//      print_uart("TT!");
       break;
     case 33:
+      //  keyboard();
       kbdintr();
-//      print_uart("1!\n");
-      inb(0x60);
       break;
     default:{
-      print_uart("%d",tf->trapno);
-      print_uart("KK!");
-      inb(0x60);
     }
   }
 }

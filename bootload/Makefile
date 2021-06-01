@@ -25,7 +25,7 @@ OBJDUMP = $(CROSS_COMPILE)objdump
 cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
         > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
 
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -O -nostdinc
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -fno-omit-frame-pointer -O -nostdinc -g
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide

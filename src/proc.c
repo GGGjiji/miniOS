@@ -71,9 +71,7 @@ void userinit(void)
 {
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
-
   p = allocproc();
-  
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
@@ -89,7 +87,6 @@ void userinit(void)
   p->tf->eip = 0;  // beginning of initcode.S
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
-//  p->cwd = namei("/");
 
   p->state = RUNNABLE;
 }
@@ -102,30 +99,57 @@ mycpu(void)
 
 void scheduler(void)
 {
-  print_uart("start!\n");
+  struct proc *p;
+  struct cpu *c = mycpu();
+  c->proc = 0;
   
   for(;;){
     // Enable interrupts on this processor.
     sti();
 
     // Loop over process table looking for process to run.
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+//    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+//      if(p->state != RUNNABLE)
+//        continue;
+      
+//      struct proc *q;
+//      q = &ptable.proc[0];
+//      if(q->state == RUNNABLE)
+//        print_uart("!!!");
+
+      p = &ptable.proc[0];
 
       c->proc = p;
+      for(int i = 0;i < 10000;i++);
+      cprintf("pid is : %d\n",(c->proc->pid==p->pid)?1:0);
+      for(int i = 0;i < 10000;i++);
+      cprintf("sz is : %d\n",(p->sz==c->proc->sz)?1:0);
+      for(int i = 0;i < 10000;i++);
+      cprintf("sz is : %d\n",c->proc->sz);
+      for(int i = 0;i < 100000;i++);
+      cprintf("name is %s\n",c->proc->name);
       switchuvm(p);
+      cprintf("name is : %s\n",p->name);
+      cprintf("pid is : %d\n",p->pid);
       p->state = RUNNING;
-
+      cprintf("f1!\n");
       swtch(&(c->scheduler), p->context);
       switchkvm();
+      print_uart("f3!\n");
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
-    }
+      for(;;);
+//    }
   }
 }
+
+void exit(void)
+{
+
+}
+
 
 /*
 //PAGEBREAK: 32
